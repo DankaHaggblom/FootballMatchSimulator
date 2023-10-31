@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  matchcalculator:
+    image: ${DOCKER_REGISTRY-}matchcalculator
+    build:
+      context: .
+      dockerfile: MatchCalculator/Dockerfile
+    environment:
+      DATABASE_HOST: database
+  database:
+    image: mongo
+    restart: always
+    command: --quiet --syslog
+    expose: 
+      - "27017"
+    volumes:
+      - database-data:/data/db
+      - mongo-config:/data/configdb
+
+volumes:
+  database-data:
+  mongo-config:
