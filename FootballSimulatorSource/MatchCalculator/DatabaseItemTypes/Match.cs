@@ -26,6 +26,14 @@ namespace MatchCalculator.DatabaseItemTypes
 
         [BsonElement("BallPossessionPlayerId")]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string BallPossessionPlayerId { get; set; } = string.Empty;
+        public string? BallPossessionPlayerId { get; set; } = null;
+
+        [BsonElement("HomeTeamId")]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? HomeTeamId { get; set; } = null;
+
+        [BsonElement("AwayTeamId")]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? AwayTeamId { get; set; } = null;
     }
 }

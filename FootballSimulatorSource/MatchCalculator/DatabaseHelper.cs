@@ -60,5 +60,13 @@ namespace MatchCalculator
         {
             return await _players.Find(x => x.TeamId == team.Id).ToListAsync();
         }
+
+        public async Task ClearDatabase()
+        {
+            await _matches.DeleteManyAsync(x => true);
+            await _players.DeleteManyAsync(x => true);
+            await _teams.DeleteManyAsync(x => true);
+            await _coaches.DeleteManyAsync(x => true);
+        }
     }
 }

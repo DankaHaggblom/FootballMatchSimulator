@@ -9,10 +9,6 @@ namespace MatchCalculator.DatabaseItemTypes
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; } = ObjectId.GenerateNewId().ToString();
 
-        [BsonRepresentation(BsonType.ObjectId)]
-        [BsonElement("MatchId")]
-        public string MatchId { get; set; } = string.Empty;
-
         [BsonElement("Name")]
         public string Name { get; set; } = string.Empty;
     }
