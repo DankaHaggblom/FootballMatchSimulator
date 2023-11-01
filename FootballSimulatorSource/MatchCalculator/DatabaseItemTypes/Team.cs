@@ -15,8 +15,5 @@ namespace MatchCalculator.DatabaseItemTypes
 
         [BsonElement("Name")]
         public string Name { get; set; } = string.Empty;
-
-        [BsonElement("AttackingTeam")]
-        public bool AttackingTeam { get; set; } = false;
     }
 }

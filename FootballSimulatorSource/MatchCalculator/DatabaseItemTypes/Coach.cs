@@ -15,5 +15,11 @@ namespace MatchCalculator.DatabaseItemTypes
 
         [BsonElement("Name")]
         public string Name { get; set; } = string.Empty;
+
+        [BsonElement("Username")]
+        public string Username { get; set; } = string.Empty;
+
+        [BsonElement("Password")]
+        public string Password { get; set; } = string.Empty;
     }
 }

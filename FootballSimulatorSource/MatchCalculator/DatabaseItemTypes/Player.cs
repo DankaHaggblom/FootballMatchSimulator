@@ -11,11 +11,14 @@ namespace MatchCalculator.DatabaseItemTypes
 
         [BsonRepresentation(BsonType.ObjectId)]
         [BsonElement("TeamId")]
-        public string TeamId { get; set; } = string.Empty;
+        public string? TeamId { get; set; } = null;
 
         [BsonRepresentation(BsonType.ObjectId)]
         [BsonElement("MatchId")]
-        public string MatchId { get; set; } = string.Empty;
+        public string? MatchId { get; set; } = null;
+
+        [BsonElement("Name")]
+        public string Name { get; set; } = string.Empty;
 
         [BsonElement("PosX")]
         public float PosX { get; set; } = 0;
