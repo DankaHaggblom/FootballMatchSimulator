@@ -3,8 +3,13 @@
     "Docker Compose": {
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchServiceName": "frontend",
+      "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}",
       "serviceActions": {
-        "matchcalculator": "StartDebugging"
+        "matchcalculator": "StartDebugging",
+        "database": "StartWithoutDebugging",
+        "frontend": "StartDebugging"
       }
     }
   }

@@ -8,6 +8,19 @@ services:
       dockerfile: MatchCalculator/Dockerfile
     environment:
       DATABASE_HOST: database
+    depends_on:
+      - database
+  frontend:
+    image: ${DOCKER_REGISTRY-}frontend
+    build:
+      context: .
+      dockerfile: Frontend/Dockerfile
+    environment:
+      DATABASE_HOST: database
+      MATCHCALCULATOR_HOST: matchcalculator
+    depends_on:
+      - database
+      - matchcalculator
   database:
     image: mongo
     restart: always

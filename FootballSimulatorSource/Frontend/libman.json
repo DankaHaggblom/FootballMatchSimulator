@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+    "libraries": [
+        {
+            "provider": "cdnjs",
+            "library": "pixi.js@7.3.3",
+            "destination": "wwwroot/lib/pixi.js/"
+        }
+    ]
+}
