@@ -76,6 +76,19 @@ namespace MatchCalculator
             return await _players.Find(x => x.TeamId == team.Id).ToListAsync();
         }
 
+        public async Task SavePlayersAsync(List<Player> players)
+        {
+            foreach (var player in players) 
+            {
+                await _players.ReplaceOneAsync(x => x.Id == player.Id, player);
+            }
+        }
+
+        public async Task SaveMatchAsync(Match match)
+        {
+            await _matches.ReplaceOneAsync(x => x.Id == match.Id, match);
+        }
+
         public async Task ClearDatabase()
         {
             await _matches.DeleteManyAsync(x => true);
