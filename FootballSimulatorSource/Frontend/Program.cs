@@ -22,4 +22,14 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 
+app.MapGet("/GetGameState", async (string matchId) =>
+{
+    var matchCalculatorUrl = @$"http://{Environment.GetEnvironmentVariable("MATCHCALCULATOR_HOST")}/GetMatchGameState?matchId={matchId}";
+    // Use HttpClient to send an http web request to the match calculator url to obtain the JSON data.
+    var client = new HttpClient();
+    var response = await client.GetAsync(matchCalculatorUrl);
+    var content = await response.Content.ReadAsStringAsync();
+    return Results.Ok(content);
+});
+
 app.Run();

@@ -103,11 +103,51 @@ namespace MatchCalculator
                     player.PosX = startingPositions[i].X * (team.Id == match.HomeTeamId ? -1 : 1);
                     player.PosY = startingPositions[i].Y;
                 }
+
+                await dbHelper.SavePlayersAsync(players);
             }
 
             match.BallPosX = 0;
             match.BallPosY = 0;
             match.BallPossessionPlayerId = null;
+        }
+
+        public static async Task<SimulateResults> ResetMatch(DatabaseHelper dbHelper, string matchId)
+        {
+            var match = await dbHelper.GetMatchAsync(matchId);
+            var team1 = await dbHelper.GetTeamAsync(match.HomeTeamId!);
+            var team2 = await dbHelper.GetTeamAsync(match.AwayTeamId!);
+            var players1 = await dbHelper.GetAllPlayersFromTeamAsync(team1);
+            var players2 = await dbHelper.GetAllPlayersFromTeamAsync(team2);
+            ResetField(dbHelper, match);
+            await dbHelper.SaveMatchAsync(match);
+
+            return new SimulateResults
+            {
+                Events = new(),
+                Match = match,
+                AwayTeam = team2,
+                HomeTeam = team1,                
+                Players = players1.Concat(players2).ToList()
+            };
+        }
+
+        public static async Task<SimulateResults> GetMatchGameState(DatabaseHelper dbHelper, string matchId)
+        {
+            var match = await dbHelper.GetMatchAsync(matchId);
+            var team1 = await dbHelper.GetTeamAsync(match.HomeTeamId!);
+            var team2 = await dbHelper.GetTeamAsync(match.AwayTeamId!);
+            var players1 = await dbHelper.GetAllPlayersFromTeamAsync(team1);
+            var players2 = await dbHelper.GetAllPlayersFromTeamAsync(team2);
+
+            return new SimulateResults
+            {
+                Events = new(),
+                Match = match,
+                AwayTeam = team2,
+                HomeTeam = team1,                
+                Players = players1.Concat(players2).ToList()
+            };
         }
 
         public static async Task<SimulateResults> SimulateMatchIncrement(DatabaseHelper dbHelper, float clickX, float clickY, string coachId, string matchId)
