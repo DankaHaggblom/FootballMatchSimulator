@@ -88,19 +88,14 @@ function drawField() {
     fieldContainer.scale.y = 10;
 
     app.stage.addChild(fieldContainer);
-
-    const testObject = new PIXI.Graphics()
-    .lineStyle(1, 0xFFFF00)
-    .beginFill(0xFFFF00)
-    .drawCircle(app.screen.width / 2, app.screen.height / 2, 5)
-    .endFill();
-    app.stage.addChild(testObject);
+   
 
     fieldContainer.eventMode = 'static';
-    fieldContainer.on("pointerdown", (event) => {        
+    fieldContainer.on("pointerdown", async (event) => {        
         var offsetClick = new Vector2(event.globalX - fieldContainer.x, event.globalY - fieldContainer.y);
         var fieldScaleClick = offsetClick.scale(1 / fieldContainer.scale.x);
-        console.log("You clicked at " + fieldScaleClick);        
+        console.log("You clicked at " + fieldScaleClick);
+        simulateMatch(fieldScaleClick);
     });
 }
 
@@ -125,10 +120,62 @@ function updateEntities(){
     // Update the ball's position
     ball.graphic.x = ball.position.x;
     ball.graphic.y = ball.position.y;
+    ball.graphic.zIndex = 1000;
+    fieldContainer.sortChildren();
 }
 
-function simulateMatch(clickPosition){
-    
+function updateMatch(matchData) {
+    // Delete the graphic representation of the players because they will be recreated.
+    removePlayerGraphicsFromField();
+
+    // Get team information
+    const homeTeam = matchData.homeTeam;
+    const awayTeam = matchData.awayTeam;
+    teams[0].id = homeTeam.id;
+    teams[0].name = homeTeam.name;
+    teams[1].id = awayTeam.id;
+    teams[1].name = awayTeam.name;
+    teamDict[homeTeam.id] = teams[0];
+    teamDict[awayTeam.id] = teams[1];
+
+    // Update player information
+    players = matchData.players
+        .map(p => ({
+            id: p.id,
+            team: teamDict[p.teamId],
+            position: new Vector2(p.posX, p.posY),
+            graphic: new PIXI.Graphics()
+                .beginFill(teamDict[p.teamId].color)
+                .drawCircle(0, 0, 1)
+                .endFill()
+        }));
+
+    // Update the ball position
+    ball.position = new Vector2(matchData.match.ballPosX, matchData.match.ballPosY);
+
+    // Re-add the players to the field container because they have been recreated.
+    addPlayerGraphicsToField();
+    updateEntities();
+}
+
+async function simulateMatch(clickPosition) {
+    try {
+        // Fetch game state
+        const response = await fetch(`/SimulateMatchClick?clickX=${clickPosition.x}&clickY=${clickPosition.y}&coachId=${coachId}&matchId=${matchId}`, { cache: 'no-cache' });
+        // If it answers, process the response
+        if (response.ok) {
+            const jsonResponse = await response.json();
+            const matchData = JSON.parse(jsonResponse);
+            updateMatch(matchData); 
+            console.log(`The ball is at ${ball.position}`);
+            for(let event of matchData.events){
+                console.log(event);
+            }
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }        
 }
 
 async function getMatchGamestate() {
@@ -140,31 +187,7 @@ async function getMatchGamestate() {
         if (response.ok) {
             const jsonResponse = await response.json();            
             const matchData = JSON.parse(jsonResponse);
-            
-            // Get team information
-            const homeTeam = matchData.homeTeam;
-            const awayTeam = matchData.awayTeam;
-            teams[0].id = homeTeam.id;
-            teams[0].name = homeTeam.name;
-            teams[1].id = awayTeam.id;
-            teams[1].name = awayTeam.name;
-            teamDict[homeTeam.id] = teams[0];
-            teamDict[awayTeam.id] = teams[1];
-
-            // Update player information
-            players = matchData.players
-                .map(p => ({
-                    id: p.id,
-                    team: teamDict[p.teamId],
-                    position: new Vector2(p.posX, p.posY),
-                    graphic: new PIXI.Graphics()
-                        .beginFill(teamDict[p.teamId].color)
-                        .drawCircle(0, 0, 1)
-                        .endFill()
-                }));
-            
-            // Update the ball position
-            ball.position = new Vector2(matchData.match.ballPosX, matchData.match.ballPosY);
+            updateMatch(matchData);
         }
     }
     catch (error) {

@@ -84,7 +84,7 @@ namespace MatchCalculator
             };
         }
 
-        private static async void ResetField(DatabaseHelper dbHelper, Match match)
+        private static async Task ResetField(DatabaseHelper dbHelper, Match match)
         {
             var teams = new[]
             {
@@ -119,7 +119,7 @@ namespace MatchCalculator
             var team2 = await dbHelper.GetTeamAsync(match.AwayTeamId!);
             var players1 = await dbHelper.GetAllPlayersFromTeamAsync(team1);
             var players2 = await dbHelper.GetAllPlayersFromTeamAsync(team2);
-            ResetField(dbHelper, match);
+            await ResetField(dbHelper, match);
             await dbHelper.SaveMatchAsync(match);
 
             return new SimulateResults
@@ -163,7 +163,7 @@ namespace MatchCalculator
             var events = new List<string>();
 
             // Simulate the movement of the coach's players from the human click
-            SimulateTeamIncrement(dbHelper, clickPos, match, coachPlayers, aiPlayers, events, goalCenterPositions[1]);
+            await SimulateTeamIncrement(dbHelper, clickPos, match, coachPlayers, aiPlayers, events, goalCenterPositions[1]);
             // Decide a click position for the AI.
             if (aiPlayers.Any(x => x.Id == match.BallPossessionPlayerId))
             {
@@ -174,7 +174,7 @@ namespace MatchCalculator
                 aiClickPos = new Vector2(match.BallPosX, match.BallPosY);
             }
             // Simulate the movement of the AI's players from the AI click
-            SimulateTeamIncrement(dbHelper, aiClickPos, match, aiPlayers, coachPlayers, events, goalCenterPositions[0]);
+            await SimulateTeamIncrement(dbHelper, aiClickPos, match, aiPlayers, coachPlayers, events, goalCenterPositions[0]);
 
             await dbHelper.SaveMatchAsync(match);
             await dbHelper.SavePlayersAsync(aiPlayers.Concat(coachPlayers).ToList());
@@ -190,7 +190,7 @@ namespace MatchCalculator
             };
         }
 
-        private static void SimulateTeamIncrement(DatabaseHelper dbHelper, Vector2 clickPos, Match match, List<Player> teamPlayers, List<Player> otherPlayers, List<string> events, Vector2 goalPosition)
+        private static async Task SimulateTeamIncrement(DatabaseHelper dbHelper, Vector2 clickPos, Match match, List<Player> teamPlayers, List<Player> otherPlayers, List<string> events, Vector2 goalPosition)
         {
             // Depending on whether the coachTeam holds the ball or not, do different things.
             if (teamPlayers.Any(x => x.Id == match.BallPossessionPlayerId))
@@ -234,7 +234,7 @@ namespace MatchCalculator
                                 match.ScoreAway = match.ScoreAway++;
                             }
 
-                            ResetField(dbHelper, match);
+                            await ResetField(dbHelper, match);
                         }
                     }
                     else if (closestTeamMateToPassDirection?.Length() < 40 && closestTeamMateToPass is not null)
@@ -257,7 +257,9 @@ namespace MatchCalculator
                             var dirToMate = closestTeamMateToPassDirection ?? default;
                             var lengthToMate = closestTeamMateToPassDirection?.Length() ?? 0;
                             var endDistance = RandomNumberGenerator.GetInt32((int)lengthToMate);
-                            var endPosition = oldPos + Vector2.Normalize(dirToMate) * endDistance;
+                            var endPosition = (dirToMate == Vector2.Zero)
+                                ? oldPos
+                                : oldPos + Vector2.Normalize(dirToMate) * endDistance;
                             match.BallPossessionPlayerId = null;
                             match.BallPosX = endPosition.X;
                             match.BallPosY = endPosition.Y;
@@ -266,7 +268,9 @@ namespace MatchCalculator
                     else
                     {
                         // The player moves towards the click direction at their speed
-                        var newPos = oldPos + Vector2.Normalize(clickDirection) * Math.Min(playerSpeed, clickDirection.Length());
+                        var newPos = (clickDirection == Vector2.Zero)
+                            ? oldPos
+                            : oldPos + Vector2.Normalize(clickDirection) * Math.Min(playerSpeed, clickDirection.Length());
                         player.PosX = newPos.X;
                         player.PosY = newPos.Y;
                         match.BallPosX = player.PosX;
@@ -274,6 +278,7 @@ namespace MatchCalculator
                     }
                 }
             }
+            // When the team doesn't hold the ball...
             else
             {
                 foreach (var player in teamPlayers)
@@ -284,7 +289,9 @@ namespace MatchCalculator
                     // The player moves towards the click or towards the ball, whatever is closest
                     var targetDirection = clickDirection.Length() < ballDirection.Length() ? clickDirection : ballDirection;
                     // The player moves towards its target at their speed.
-                    var newPos = oldPos + Vector2.Normalize(targetDirection) * Math.Min(playerSpeed, targetDirection.Length());
+                    var newPos = (targetDirection == Vector2.Zero)
+                        ? oldPos
+                        : oldPos + Vector2.Normalize(targetDirection) * Math.Min(playerSpeed, targetDirection.Length());
 
                     player.PosX = newPos.X;
                     player.PosY = newPos.Y;
@@ -310,7 +317,7 @@ namespace MatchCalculator
 
                             if (stealingChance > stealingRoll)
                             {
-                                events.Add($"{player.Name} steals the ball from {otherPlayers.FirstOrDefault(x => x.Id == match.BallPossessionPlayerId)}.");
+                                events.Add($"{player.Name} steals the ball from {otherPlayers.FirstOrDefault(x => x.Id == match.BallPossessionPlayerId)?.Name}.");
                                 match.BallPossessionPlayerId = player.Id;
                                 match.BallPosX = player.PosX;
                                 match.BallPosY = player.PosY;

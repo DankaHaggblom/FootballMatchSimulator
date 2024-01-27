@@ -32,4 +32,25 @@ app.MapGet("/GetGameState", async (string matchId) =>
     return Results.Ok(content);
 });
 
+app.MapGet("/SimulateMatchClick", async (string coachId, string matchId, float clickX, float clickY) =>
+{
+    var matchCalculatorUrl = @$"http://{Environment.GetEnvironmentVariable("MATCHCALCULATOR_HOST")}/SimulateMatch?clickX={clickX}&clickY={clickY}&coachId={coachId}&matchId={matchId}";
+    // Use HttpClient to send an http web request to the match calculator url to obtain the JSON data.
+    var client = new HttpClient();
+    var response = await client.GetAsync(matchCalculatorUrl);
+    var content = await response.Content.ReadAsStringAsync();
+    return Results.Ok(content);
+
+});
+
+app.MapGet("/ResetMatch", async (string matchId) =>
+{
+  var matchCalculatorUrl = @$"http://{Environment.GetEnvironmentVariable("MATCHCALCULATOR_HOST")}/ResetMatch?matchId={matchId}";
+    // Use HttpClient to send an http web request to the match calculator url to obtain the JSON data.
+    var client = new HttpClient();
+    var response = await client.GetAsync(matchCalculatorUrl);
+    var content = await response.Content.ReadAsStringAsync();
+    return Results.Ok(content);
+});
+
 app.Run();
