@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Mvc;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -45,7 +47,17 @@ app.MapGet("/SimulateMatchClick", async (string coachId, string matchId, float c
 
 app.MapGet("/ResetMatch", async (string matchId) =>
 {
-  var matchCalculatorUrl = @$"http://{Environment.GetEnvironmentVariable("MATCHCALCULATOR_HOST")}/ResetMatch?matchId={matchId}";
+    var matchCalculatorUrl = @$"http://{Environment.GetEnvironmentVariable("MATCHCALCULATOR_HOST")}/ResetMatch?matchId={matchId}";
+    // Use HttpClient to send an http web request to the match calculator url to obtain the JSON data.
+    var client = new HttpClient();
+    var response = await client.GetAsync(matchCalculatorUrl);
+    var content = await response.Content.ReadAsStringAsync();
+    return Results.Ok(content);
+});
+
+app.MapPost("/Login", async (Credentials credentials) =>
+{
+    var matchCalculatorUrl = @$"http://{Environment.GetEnvironmentVariable("MATCHCALCULATOR_HOST")}/LoginOrRegister?username={credentials.username}&password={credentials.password}";
     // Use HttpClient to send an http web request to the match calculator url to obtain the JSON data.
     var client = new HttpClient();
     var response = await client.GetAsync(matchCalculatorUrl);
@@ -54,3 +66,5 @@ app.MapGet("/ResetMatch", async (string matchId) =>
 });
 
 app.Run();
+
+record Credentials (string username, string password);

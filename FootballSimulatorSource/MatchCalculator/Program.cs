@@ -9,4 +9,5 @@ app.MapGet("/CreateDataSet", async () => await MatchCalculatorHelper.InitializeD
 app.MapGet("/SimulateMatch", async (float clickX, float clickY, string coachId, string matchId) => await MatchCalculatorHelper.SimulateMatchIncrement(dbHelper, clickX, clickY, coachId, matchId));
 app.MapGet("/ResetMatch", async (string matchId) => await MatchCalculatorHelper.ResetMatch(dbHelper, matchId));
 app.MapGet("/GetMatchGameState", async (string matchId) => await MatchCalculatorHelper.GetMatchGameState(dbHelper, matchId));
+app.MapGet("/LoginOrRegister", async (string username, string password) => await MatchCalculatorHelper.LoginOrRegister(dbHelper, username, password));
 app.Run();

@@ -1,7 +1,8 @@
 ﻿import { Vector2 } from './Vector2.js';
 
-const coachId = "6542b2708c60eec3fd706991";
-const matchId = "6542b2708c60eec3fd70698e";
+let coachId = "";
+let matchId = "";
+
 // The app object that is common to the client.
 let app;
 let fieldContainer;
@@ -27,7 +28,10 @@ let teams = [
 ];
 let teamDict = {};
 
-async function start() {
+async function start(coachIdParam, matchIdParam) {
+    coachId = coachIdParam;
+    matchId = matchIdParam;
+
     app = new PIXI.Application({ background: '#888888', resizeTo: window });
     document.body.appendChild(app.view);
         
@@ -35,21 +39,6 @@ async function start() {
     await getMatchGamestate();
     addPlayerGraphicsToField();
     updateEntities();
-}
-
-function createPlayers(){
-    for(let i=0;i<14;i++){
-        let team = teams[i%2];
-        let player = {
-            team: team,
-            position: new Vector2(i, i),
-            graphic: new PIXI.Graphics()
-                .beginFill(team.color)
-                .drawCircle(0, 0, 1)
-                .endFill()
-        };
-        players.push(player);
-    }
 }
 
 function drawField() {

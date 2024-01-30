@@ -56,6 +56,11 @@ namespace MatchCalculator
             return await _matches.Find(x => x.Id == matchId).FirstOrDefaultAsync();
         }
 
+        public async Task<Match> GetMatchFromTeamIdAsync(string teamId)
+        {
+            return await _matches.Find(x => x.HomeTeamId == teamId || x.AwayTeamId == teamId).FirstOrDefaultAsync();            
+        }
+
         public async Task<Coach> GetCoachAsync(string username, string password)
         {
             return await _coaches.Find(x => x.Username == username && x.Password == password).FirstOrDefaultAsync();

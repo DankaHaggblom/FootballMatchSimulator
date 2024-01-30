@@ -84,6 +84,65 @@ namespace MatchCalculator
             };
         }
 
+        public record CoachAndMatch(string coachId, string matchId);
+
+        public static async Task<CoachAndMatch> LoginOrRegister(DatabaseHelper dbHelper, string username, string password)
+        {           
+            // Check if there exists a coach with those credentials, and if so, return its Id and its match Id.
+            var coach = await dbHelper.GetCoachAsync(username, password);
+            Match match;
+
+            if (coach is not null)
+            {
+                match = await dbHelper.GetMatchFromTeamIdAsync(coach.TeamId);                
+                return new CoachAndMatch(coach.Id, match.Id);                
+            }
+            // If there doesn't exist a coach with those credentials, create a new coach with those credentials.
+            (coach, match) = await CreateNewSession(dbHelper, username, password);
+            return new CoachAndMatch(coach.Id, match.Id);
+        }
+
+        private static async Task<(Coach, Match)> CreateNewSession(DatabaseHelper dbHelper, string username, string password)
+        {
+            var match = new Match();
+            var homeTeam = new Team { Name = $"FC {username}" };
+            var awayTeam = new Team { Name = $"FC {username} Rivals" };
+            var players = new List<Player>();
+            var coach = new Coach
+            {
+                Name = username,
+                Username = username,
+                Password = password,
+                TeamId = homeTeam.Id
+            };
+            match.HomeTeamId = homeTeam.Id;
+            match.AwayTeamId = awayTeam.Id;
+
+            foreach (var team in new[] { homeTeam, awayTeam })
+            {
+                for (int i = 0; i < 7; i++)
+                {
+                    var player = new Player
+                    {
+                        Name = team.Name + i.ToString(),
+                        TeamId = team.Id,
+                        MatchId = match.Id,
+                        PosX = startingPositions[i].X * (team == homeTeam ? -1 : 1),
+                        PosY = startingPositions[i].Y
+                    };
+
+                    players.Add(player);
+                    await dbHelper.CreatePlayerAsync(player);
+                }
+            }
+            await dbHelper.CreateMatchAsync(match);
+            await dbHelper.CreateTeamAsync(homeTeam);
+            await dbHelper.CreateTeamAsync(awayTeam);
+            await dbHelper.CreateCoachAsync(coach);
+
+            return (coach, match);
+        }
+
         private static async Task ResetField(DatabaseHelper dbHelper, Match match)
         {
             var teams = new[]
