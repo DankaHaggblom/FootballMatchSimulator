@@ -5,7 +5,7 @@ let coachId = cookies.getCookie("coachId");
 let matchId = cookies.getCookie("matchId");
 
 if (coachId === "" || matchId === "") {
-    let username = prompt("You are not logged in in the system. Please provide your username.");
+    let username = prompt("You are not logged in in the system. Please provide your username. If it is a new username it will be created");
     let password = prompt("Please provide your password.")
     // Send credentials to frontend and obtain coachId and matchId.
     const response = await fetch("/Login",{
