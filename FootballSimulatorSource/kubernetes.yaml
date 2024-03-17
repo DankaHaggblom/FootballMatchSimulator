@@ -1,0 +1,187 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: footballsim
+  labels:
+    name: footballsim
+
+# Frontend deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: footballsim
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: danielhaggblom/frontend:latest
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        env:
+        - name: ASPNETCORE_URLS
+          value: http://*:80
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Development
+        - name: MATCHCALCULATOR_HOST
+          value: matchcalculator-service.footballsim
+  selector:
+    matchLabels:
+      app: frontend
+
+# Matchcalculator deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matchcalculator
+  namespace: footballsim
+  labels:
+    app: matchcalculator
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: matchcalculator
+    spec:
+      containers:
+      - name: matchcalculator
+        image: danielhaggblom/matchcalculator:latest
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        env:
+        - name: ASPNETCORE_URLS
+          value: http://*:80
+        - name: ASPNETCORE_ENVIRONMENT
+          value: Development
+        - name: DATABASE_HOST
+          value: database-service.footballsim
+  selector:
+    matchLabels:
+      app: matchcalculator
+
+# Database
+# --------------------
+# - one container per pod running the image mongodb
+# - one headless service to access them.
+# - Two persistentVolumeClaims/mounts: database-data, and mongo-config
+
+# Database StatefulSet
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: database
+  namespace: footballsim
+  labels:
+    app: database
+spec:
+  serviceName: mongodb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: database
+  template:
+    metadata:
+      labels:
+        app: database
+    spec:
+      containers:
+      - name: database
+        image: mongo
+        ports:
+        - containerPort: 27017
+          name: mongodb-port
+        volumeMounts:
+        - name: database-data
+          mountPath: /data/db
+        - name: mongo-config
+          mountPath: /data/configdb
+  volumeClaimTemplates:
+    - metadata:
+        name: database-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests: 
+            storage: 10Mi
+    - metadata:
+        name: mongo-config
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests: 
+            storage: 5Mi          
+
+# Database Headless Service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-service
+  namespace: footballsim
+  labels:
+    app: database
+spec:
+  ports:
+  - port: 27017
+    targetPort: mongodb-port
+  selector:
+    app: database
+
+# Frontend service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: footballsim
+  labels: 
+    app: frontend
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080
+    targetPort: 80
+  - name: https
+    protocol: TCP
+    port: 8443
+    targetPort: 443
+  selector:
+    app: frontend
+
+# MatchCalculator service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matchcalculator-service
+  namespace: footballsim
+  labels: 
+    app: matchcalculator
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  - name: https
+    protocol: TCP
+    port: 443
+    targetPort: 443
+  selector:
+    app: matchcalculator
